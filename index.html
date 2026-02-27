@@ -3,14 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RZone Cloud Platform</title>
+    <title>RZone - Cloud Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap');
-        body { background-color: #000; color: #fff; font-family: sans-serif; }
+        body { background-color: #000; color: #fff; font-family: sans-serif; overflow-x: hidden; }
         .glass { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
         .editor-font { font-family: 'JetBrains Mono', monospace; }
-        .hidden { display: none; }
+        .hidden { display: none !important; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -18,39 +20,43 @@
     <div id="render-screen" class="hidden min-h-screen flex items-center justify-center">
         <div class="text-center">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
-            <p class="text-gray-500 tracking-widest text-sm">LOADING DEPLOYMENT...</p>
+            <p class="text-gray-500 tracking-widest text-sm uppercase">Loading Deployment...</p>
         </div>
     </div>
 
     <div id="dashboard-screen" class="hidden">
+        
         <div id="login-ui" class="min-h-screen flex items-center justify-center p-6">
             <div class="glass p-8 rounded-3xl w-full max-w-sm text-center">
                 <h1 class="text-4xl font-black tracking-tighter mb-2">RZONE</h1>
-                <p class="text-gray-500 text-sm mb-8">Cloud Platform by @maramadhona</p>
+                <p class="text-gray-500 text-sm mb-8">GoR 1.1 | By @maramadhona</p>
                 <input type="password" id="pin" placeholder="PIN: 190713" class="w-full p-4 bg-white/5 border border-white/10 rounded-2xl mb-4 text-center focus:outline-none focus:border-blue-500 transition">
-                <button onclick="handleLogin()" class="w-full bg-white text-black py-4 rounded-2xl font-bold hover:bg-gray-200 transition">Unlock Dashboard</button>
+                <button onclick="handleLogin()" class="w-full bg-white text-black py-4 rounded-2xl font-bold hover:bg-gray-200 transition text-lg">Unlock Dashboard</button>
             </div>
         </div>
 
         <div id="main-ui" class="hidden p-6 lg:p-12 max-w-6xl mx-auto">
             <div class="flex justify-between items-center mb-12">
-                <h2 class="text-2xl font-bold tracking-tighter">My Repositories</h2>
-                <button onclick="createProject()" class="bg-blue-600 px-6 py-2 rounded-full font-bold text-sm">+ New Project</button>
+                <div>
+                    <h2 class="text-2xl font-bold tracking-tighter">My Projects</h2>
+                    <p class="text-gray-500 text-sm">Manage your rzone.web.id subdomains</p>
+                </div>
+                <button onclick="createProject()" class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-full font-bold text-sm transition">+ New Project</button>
             </div>
             <div id="project-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         </div>
 
         <div id="editor-ui" class="hidden p-6 lg:p-12">
             <div class="max-w-6xl mx-auto">
-                <button onclick="location.reload()" class="text-gray-500 hover:text-white mb-6 flex items-center gap-2">← Dashboard</button>
-                <div class="flex flex-col md:flex-row justify-between mb-8 gap-4">
+                <button onclick="location.reload()" class="text-gray-500 hover:text-white mb-6 flex items-center gap-2 transition">← Dashboard</button>
+                <div class="flex flex-col md:flex-row justify-between mb-8 gap-4 bg-white/5 p-6 rounded-3xl border border-white/5">
                     <div>
                         <h2 id="active-repo-name" class="text-3xl font-black italic"></h2>
-                        <p id="active-repo-url" class="text-blue-500 text-sm cursor-pointer"></p>
+                        <p id="active-repo-url" class="text-blue-500 text-sm font-mono mt-1"></p>
                     </div>
                     <div class="flex gap-3">
                         <button onclick="addNewFile()" class="glass px-6 py-2 rounded-xl text-sm font-bold hover:bg-white/5">Add File</button>
-                        <button onclick="openLiveSite()" class="bg-white text-black px-6 py-2 rounded-xl text-sm font-bold">Open Site</button>
+                        <button id="btn-open-site" class="bg-white text-black px-6 py-2 rounded-xl text-sm font-bold hover:bg-gray-200 transition">Open Live Site</button>
                     </div>
                 </div>
                 
@@ -58,9 +64,11 @@
                     <div id="file-sidebar" class="space-y-2"></div>
                     <div class="lg:col-span-3">
                         <div id="editor-area" class="hidden">
-                            <p id="editing-name" class="text-xs text-gray-600 mb-2 font-mono"></p>
-                            <textarea id="code-input" class="w-full h-[500px] bg-[#0a0a0a] border border-white/10 p-6 editor-font text-blue-300 focus:outline-none rounded-2xl resize-none shadow-2xl" spellcheck="false"></textarea>
-                            <button onclick="saveCurrentFile()" class="mt-4 bg-blue-600 px-8 py-3 rounded-xl font-bold shadow-lg shadow-blue-900/20">Save to Cloud</button>
+                            <div class="flex justify-between items-end mb-2">
+                                <p id="editing-name" class="text-xs text-gray-500 font-mono uppercase tracking-widest"></p>
+                                <button onclick="saveCurrentFile()" class="bg-blue-600 px-6 py-2 rounded-xl text-xs font-bold shadow-lg shadow-blue-900/40">SAVE TO CLOUD</button>
+                            </div>
+                            <textarea id="code-input" class="w-full h-[550px] bg-[#080808] border border-white/10 p-6 editor-font text-blue-300 focus:outline-none rounded-2xl resize-none" spellcheck="false"></textarea>
                         </div>
                     </div>
                 </div>
@@ -70,9 +78,9 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, push, onValue, update, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, set, push, onValue, update, get, query, orderByChild, equalTo, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // CONFIG ASLI MILIK KAMU
+        // CONFIG FIREBASE ASLI MILIK KAMU
         const firebaseConfig = {
             apiKey: "AIzaSyBn6vVKvPf74V7UUsWWnTI9uRh5FI_urK0",
             authDomain: "rzones-c08ee.firebaseapp.com",
@@ -86,17 +94,17 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- DETEKSI SUBDOMAIN ---
+        // --- DETEKSI JITU: DASHBOARD VS PROJECT ---
         const host = window.location.hostname;
         const parts = host.split('.');
-        
-        // Mode Renderer (misal: portofolio.rzone.web.id)
-        if (parts.length > 3 || (parts.length === 3 && parts[0] !== 'www')) {
+
+        // Masuk mode Render jika membuka subdomain (contoh: tes.rzone.web.id)
+        const isProject = parts.length > 3 || (parts.length === 3 && parts[0] !== 'rzone' && parts[0] !== 'www');
+
+        if (isProject) {
             document.getElementById('render-screen').classList.remove('hidden');
-            const sub = parts[0];
-            renderSite(sub);
+            renderSite(parts[0]);
         } else {
-            // Mode Dashboard
             document.getElementById('dashboard-screen').classList.remove('hidden');
         }
 
@@ -111,11 +119,11 @@
                     document.open();
                     document.write(index.content);
                     document.close();
-                } else { document.body.innerHTML = "Repo kosong."; }
-            } else { document.body.innerHTML = "404: Website Belum Dibuat."; }
+                } else { document.body.innerHTML = "<body style='background:#000;color:#555;display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif'>Repository is empty.</body>"; }
+            } else { document.body.innerHTML = "404 | Project Not Found"; }
         }
 
-        // --- DASHBOARD SYSTEM ---
+        // --- DASHBOARD LOGIC ---
         let activeRepoId = null;
         let activeFileId = null;
 
@@ -124,14 +132,21 @@
                 document.getElementById('login-ui').classList.add('hidden');
                 document.getElementById('main-ui').classList.remove('hidden');
                 loadAllProjects();
-            } else { alert("PIN Salah, Wak!"); }
+            } else { alert("PIN Salah!"); }
         };
 
         window.createProject = async () => {
-            const name = prompt("Nama Project (huruf kecil, tanpa spasi):");
+            const name = prompt("Nama Project (contoh: portofolio):");
             if(name) {
+                const cleanName = name.toLowerCase().replace(/\s/g, '-');
                 const newRef = push(ref(db, 'repositories'));
-                await set(newRef, { name: name.toLowerCase().replace(/\s/g, '-'), createdAt: Date.now() });
+                await set(newRef, { name: cleanName, createdAt: Date.now() });
+            }
+        };
+
+        window.deleteProject = async (id, name) => {
+            if(confirm(`Hapus project "${name}" secara permanen?`)) {
+                await remove(ref(db, `repositories/${id}`));
             }
         };
 
@@ -142,9 +157,12 @@
                 if(snap.exists()) {
                     Object.entries(snap.val()).forEach(([id, repo]) => {
                         list.innerHTML += `
-                            <div onclick="openProject('${id}', '${repo.name}')" class="glass p-6 rounded-3xl cursor-pointer hover:bg-white/5 transition border-white/5 hover:border-white/20">
-                                <div class="w-12 h-12 bg-blue-600 rounded-2xl mb-4 flex items-center justify-center font-bold text-xl">${repo.name[0].toUpperCase()}</div>
-                                <h3 class="text-xl font-bold">${repo.name}</h3>
+                            <div class="glass p-6 rounded-3xl group relative border-white/5 hover:border-white/20 transition cursor-pointer" onclick="openProject('${id}', '${repo.name}')">
+                                <button onclick="event.stopPropagation(); deleteProject('${id}', '${repo.name}')" class="absolute top-4 right-4 text-gray-700 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                                </button>
+                                <div class="w-10 h-10 bg-blue-600 rounded-xl mb-4 flex items-center justify-center font-bold text-lg">${repo.name[0].toUpperCase()}</div>
+                                <h3 class="text-xl font-bold italic tracking-tight">${repo.name}</h3>
                                 <p class="text-xs text-gray-500 font-mono mt-1">${repo.name}.rzone.web.id</p>
                             </div>
                         `;
@@ -157,8 +175,9 @@
             activeRepoId = id;
             document.getElementById('main-ui').classList.add('hidden');
             document.getElementById('editor-ui').classList.remove('hidden');
-            document.getElementById('active-repo-name').innerText = name;
+            document.getElementById('active-repo-name').innerText = name.toUpperCase();
             document.getElementById('active-repo-url').innerText = `${name}.rzone.web.id`;
+            document.getElementById('btn-open-site').onclick = () => window.open(`http://${name}.rzone.web.id`, '_blank');
             loadRepoFiles(id);
         };
 
@@ -176,8 +195,8 @@
                 if(snap.exists()) {
                     Object.entries(snap.val()).forEach(([fid, file]) => {
                         sidebar.innerHTML += `
-                            <button onclick="loadEditor('${fid}', '${file.name}', \`${btoa(encodeURIComponent(file.content))}\`)" class="w-full text-left p-4 rounded-xl text-sm font-mono glass hover:bg-white/10 transition mb-2">
-                                📄 ${file.name}
+                            <button onclick="loadEditor('${fid}', '${file.name}', \`${b64Encode(file.content)}\`)" class="w-full text-left p-4 rounded-xl text-sm font-mono glass hover:bg-white/10 transition mb-2 flex justify-between">
+                                <span>📄 ${file.name}</span>
                             </button>
                         `;
                     });
@@ -188,20 +207,19 @@
         window.loadEditor = (fid, name, contentB64) => {
             activeFileId = fid;
             document.getElementById('editor-area').classList.remove('hidden');
-            document.getElementById('editing-name').innerText = `EDITING: ${name}`;
-            document.getElementById('code-input').value = decodeURIComponent(atob(contentB64));
+            document.getElementById('editing-name').innerText = `Editing: ${name}`;
+            document.getElementById('code-input').value = b64Decode(contentB64);
         };
 
         window.saveCurrentFile = async () => {
             const newContent = document.getElementById('code-input').value;
             await update(ref(db, `repositories/${activeRepoId}/files/${activeFileId}`), { content: newContent });
-            alert("Berhasil Disimpan!");
+            alert("Saved successfully!");
         };
 
-        window.openLiveSite = () => {
-            const url = document.getElementById('active-repo-url').innerText;
-            window.open(`http://${url}`, '_blank');
-        };
+        // Helper Encoding Karakter Spesial
+        function b64Encode(str) { return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (m, p) => String.fromCharCode('0x' + p))); }
+        function b64Decode(str) { return decodeURIComponent(atob(str).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')); }
 
     </script>
 </body>
