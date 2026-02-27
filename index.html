@@ -2,347 +2,386 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GoR 1.1 - Cloud OS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAMAA PANEL - SMM Termurah</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono&family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
-        :root { --primary: #2563eb; --bg: #f8fafc; }
-        body { background: var(--bg); color: #0f172a; font-family: 'Plus Jakarta Sans', sans-serif; transition: 0.3s; }
-        .glass { background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.3); }
-        .hidden { display: none !important; }
-        #visual-console { background: #020617; color: #38bdf8; font-family: 'JetBrains Mono'; font-size: 10px; display: none; }
-        .card-project { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
-        .card-project:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); border-color: var(--primary); }
-        textarea { font-family: 'JetBrains Mono', monospace; font-size: 14px !important; resize: none; }
-        /* 404 Style */
-        .not-found-bg { background: radial-gradient(circle, #f8fafc 0%, #e2e8f0 100%); }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #1e293b; }
+        .sidebar { width: 260px; background-color: #0f172a; min-height: 100vh; position: fixed; transition: 0.3s; z-index: 100; display: none; }
+        .main-content { margin-left: 0; min-height: 100vh; transition: 0.3s; display: none; }
+        .nav-item { display: flex; align-items: center; padding: 12px 20px; color: #94a3b8; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; border-radius: 8px; margin: 4px 15px; }
+        .nav-item:hover, .nav-item.active { background: #1e293b; color: #38bdf8; }
+        .nav-item i { width: 24px; font-size: 16px; }
+        .section-label { font-size: 10px; color: #475569; font-weight: 800; padding: 20px 25px 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+        .tab-content { display: none; padding: 30px; } .tab-content.active { display: block; }
+        
+        /* Auth Overlay */
+        #authOverlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.9); z-index: 5000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        
+        /* Landing Page Styles */
+        #landingPage { display: block; min-height: 100vh; background: white; }
+        .hero-section { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 100px 20px; text-align: center; }
+
+        .btn-blue { background: #2563eb; color: white; padding: 12px; border-radius: 8px; font-weight: 600; width: 100%; transition: 0.2s; }
+        .btn-blue:hover { background: #1d4ed8; }
+        #receipt-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        #struk-topup { width: 320px; background: white; padding: 25px; color: black; font-family: monospace; }
+        #notif-popup { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .notif-box { background: white; border-radius: 30px; width: 100%; max-width: 350px; padding: 35px; text-align: center; animation: popScale 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        
+        @keyframes popScale { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @media (min-width: 768px) { 
+            .sidebar.logged-in { display: block; } 
+            .main-content.logged-in { display: block; margin-left: 260px; }
+        }
+        @media (max-width: 768px) { 
+            .sidebar.open { display: block; margin-left: 0; } 
+            .sidebar { margin-left: -260px; } 
+            .main-content.logged-in { display: block; margin-left: 0; }
+        }
     </style>
 </head>
 <body>
 
-    <input type="file" id="file-picker" class="hidden" accept=".html">
+    <section id="landingPage">
+        <nav class="flex justify-between items-center px-8 py-6 border-b">
+            <div class="flex items-center gap-2">
+                <div class="bg-blue-600 p-1.5 rounded-lg text-white"><i class="fas fa-bolt text-sm"></i></div>
+                <span class="font-bold text-xl tracking-tighter text-slate-800">RAMAA SMM</span>
+            </div>
+            <button onclick="showLogin()" class="font-bold text-sm text-blue-600 hover:text-blue-800 uppercase tracking-widest">Masuk</button>
+        </nav>
 
-    <div id="render-screen" class="min-h-screen flex items-center justify-center hidden">
-        <div id="loader" class="text-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600 mx-auto mb-4"></div>
-            <p class="text-blue-900 font-bold text-xs tracking-widest uppercase">GoR 1.1 Resolving...</p>
+        <div class="hero-section">
+            <h1 class="text-4xl md:text-6xl font-black mb-6 italic uppercase tracking-tighter leading-tight">Layanan SMM <br><span class="text-blue-500">Paling Murah</span> Se-Indonesia</h1>
+            <p class="text-slate-400 max-w-xl mx-auto mb-10 text-sm md:text-base leading-relaxed">Dapatkan layanan penambah followers, likes, dan view dengan harga tangan pertama. Proses cepat, layanan lengkap, dan CS responsif.</p>
+            <button onclick="showLogin()" class="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-2xl font-black uppercase text-sm tracking-widest shadow-2xl shadow-blue-500/20 transition-all">Mulai Sekarang 🔥</button>
         </div>
-        <div id="error-404" class="hidden text-center p-6">
-            <h1 class="text-9xl font-black text-slate-200">404</h1>
-            <p class="text-2xl font-bold text-slate-800 -mt-8 mb-4">Project Not Found</p>
-            <p class="text-slate-500 mb-8">Maaf Wak, alamat <span id="missing-sub" class="text-blue-600 font-mono"></span> belum terdaftar di RZone.</p>
-            <a href="https://rzone.web.id" class="bg-blue-600 text-white px-8 py-3 rounded-full font-bold shadow-lg shadow-blue-200">Bikin Project Sendiri</a>
+
+        <div class="py-20 px-8 max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
+            <div class="card p-8 text-center">
+                <i class="fas fa-tags text-3xl text-blue-600 mb-4"></i>
+                <h3 class="font-bold mb-2 uppercase italic">Harga Termurah</h3>
+                <p class="text-xs text-slate-500">Kami menjamin harga yang kami tawarkan adalah yang paling kompetitif untuk bisnis Anda.</p>
+            </div>
+            <div class="card p-8 text-center">
+                <i class="fas fa-shield-halved text-3xl text-blue-600 mb-4"></i>
+                <h3 class="font-bold mb-2 uppercase italic">Keamanan Terjamin</h3>
+                <p class="text-xs text-slate-500">Privasi dan data akun Anda aman bersama sistem keamanan enkripsi kami.</p>
+            </div>
+            <div class="card p-8 text-center">
+                <i class="fas fa-headset text-3xl text-blue-600 mb-4"></i>
+                <h3 class="font-bold mb-2 uppercase italic">Layanan Support</h3>
+                <p class="text-xs text-slate-500">Tim bantuan kami siap membantu Anda kapan saja jika mengalami kendala.</p>
+            </div>
+        </div>
+    </section>
+
+    <div id="authOverlay">
+        <div class="bg-white p-8 rounded-2xl w-full max-w-sm shadow-2xl relative">
+            <button onclick="hideLogin()" class="absolute top-4 right-4 text-slate-400"><i class="fas fa-times"></i></button>
+            <h1 class="text-2xl font-black mb-6 text-center text-slate-800 italic uppercase">RAMAA PANEL</h1>
+            <div id="regBox" class="hidden"><input type="text" id="uName" placeholder="Username" class="w-full border p-3 rounded-lg mb-3 outline-none"></div>
+            <input type="email" id="email" placeholder="Email" class="w-full border p-3 rounded-lg mb-3 outline-none">
+            <input type="password" id="password" placeholder="Password" class="w-full border p-3 rounded-lg mb-5 outline-none">
+            <button onclick="handleAuth()" id="btnAuth" class="btn-blue">MASUK</button>
+            <p onclick="toggleReg()" id="toggleTxt" class="text-center text-xs mt-4 text-slate-400 cursor-pointer">Daftar Akun Baru</p>
         </div>
     </div>
 
-    <div id="dashboard-screen" class="hidden min-h-screen">
-        
-        <div id="login-ui" class="min-h-screen flex items-center justify-center p-6">
-            <div class="glass p-10 rounded-[3rem] w-full max-w-sm text-center shadow-2xl border-white">
-                <div class="w-20 h-20 bg-blue-600 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-xl shadow-blue-200">
-                    <span class="text-white text-4xl font-black italic">R</span>
-                </div>
-                <h1 class="text-3xl font-extrabold text-slate-900 mb-1">Welcome Admin</h1>
-                <p class="text-xs font-bold text-slate-400 mb-8 uppercase tracking-widest">Version GoR 1.1</p>
-                <input type="password" id="pin" placeholder="••••••" class="w-full p-4 bg-white border-2 border-slate-100 rounded-2xl mb-4 text-center text-2xl outline-none focus:border-blue-500 transition-all">
-                <button onclick="handleLogin()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-blue-700 active:scale-95 transition-all">UNLOCK SYSTEM</button>
-            </div>
-        </div>
-
-        <div id="main-ui" class="hidden p-6 lg:p-12 max-w-7xl mx-auto">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
-                <div>
-                    <h2 class="text-5xl font-black text-slate-900 tracking-tighter italic">REPOS</h2>
-                    <p class="text-slate-500 font-medium">Monitoring <span id="total-projects" class="text-blue-600 font-bold">0</span> active deployments</p>
-                </div>
-                <div class="flex gap-3">
-                    <button onclick="showQuickStats()" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 font-bold text-xs">📊 STATS</button>
-                    <button onclick="createProject()" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold text-xs shadow-xl active:scale-95 transition-all">+ NEW DEPLOY</button>
-                </div>
-            </div>
-            
-            <div id="project-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-32"></div>
-        </div>
-
-        <div id="editor-ui" class="hidden p-4 lg:p-8">
-            <div class="max-w-screen-2xl mx-auto">
-                <div class="flex items-center justify-between mb-8">
-                    <div class="flex items-center gap-4">
-                        <button onclick="location.reload()" class="p-4 bg-white rounded-2xl shadow-sm text-slate-400 font-bold hover:text-blue-600">←</button>
-                        <div>
-                            <h2 id="active-repo-name" class="text-2xl font-black text-slate-900 italic uppercase"></h2>
-                            <div class="flex items-center gap-3">
-                                <span class="flex items-center gap-1 text-[10px] font-bold text-green-500 bg-green-50 px-2 py-0.5 rounded-full">
-                                    <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-ping"></span> LIVE
-                                </span>
-                                <p id="active-repo-url" class="text-xs text-blue-500 font-mono"></p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex gap-3">
-                        <div class="bg-white px-4 py-2 rounded-xl border border-slate-100 text-center">
-                            <p class="text-[10px] text-slate-400 font-bold uppercase">Traffic</p>
-                            <p id="repo-traffic" class="text-sm font-black text-slate-900">0</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                    <div class="lg:col-span-3 space-y-4">
-                        <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
-                            <p class="text-[10px] font-black text-slate-400 mb-4 tracking-widest uppercase">Cloud Explorer</p>
-                            <div id="file-sidebar" class="space-y-2"></div>
-                            <button onclick="triggerFilePicker()" class="w-full mt-6 p-4 border-2 border-dashed border-blue-100 rounded-2xl text-blue-600 text-xs font-black hover:bg-blue-50 transition-all">
-                                IMPORT INDEX.HTML
-                            </button>
-                        </div>
-                        <button onclick="deleteCurrentRepo()" class="w-full p-4 bg-red-50 text-red-500 rounded-2xl text-xs font-black border border-red-100 hover:bg-red-500 hover:text-white transition-all">TERMINATE REPO</button>
-                    </div>
-
-                    <div class="lg:col-span-9">
-                        <div id="editor-area" class="hidden space-y-4">
-                            <div class="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-slate-50">
-                                <div class="flex gap-4 items-center">
-                                    <span id="editing-name" class="text-xs font-mono font-bold text-slate-400"></span>
-                                    <span id="save-indicator" class="text-[10px] font-bold text-slate-300 italic">Ready</span>
-                                </div>
-                                <div class="flex gap-2">
-                                    <button onclick="saveCurrentFile()" class="bg-blue-600 text-white px-8 py-2 rounded-xl text-xs font-black shadow-lg shadow-blue-100 active:scale-95 transition-all">SAVE CLOUD</button>
-                                    <button id="btn-preview" class="bg-slate-900 text-white px-6 py-2 rounded-xl text-xs font-black active:scale-95 transition-all">VIEW LIVE</button>
-                                </div>
-                            </div>
-                            <textarea id="code-input" class="w-full h-[65vh] p-8 rounded-[2.5rem] border-2 border-white shadow-2xl focus:outline-none focus:border-blue-100 bg-white" spellcheck="false" oninput="markUnsaved()"></textarea>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div id="notif-popup">
+        <div class="notif-box shadow-2xl">
+            <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-5 text-2xl"><i class="fas fa-bolt"></i></div>
+            <h2 id="n-judul" class="text-xl font-black text-slate-800 mb-2 italic uppercase"></h2>
+            <p id="n-pesan" class="text-sm text-slate-500 mb-8 leading-relaxed"></p>
+            <button onclick="closeNotif()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest">Siap, Mengerti! 🔥</button>
         </div>
     </div>
 
-    <div id="visual-console" class="fixed bottom-0 left-0 w-full h-28 overflow-y-auto p-4 z-[9999] border-t border-slate-800">
-        <div id="console-logs" class="space-y-1">Cloud Console GoR 1.1 Ready...</div>
+    <div id="receipt-modal">
+        <div class="flex flex-col items-center">
+            <div id="struk-topup" class="mb-4 shadow-2xl">
+                <center>
+                    <h2 class="font-bold text-lg">RAMAA PANEL</h2>
+                    <p class="text-[10px]">TAGIHAN DEPOSIT</p>
+                    <hr class="my-2 border-dashed border-black">
+                </center>
+                <div class="text-[11px] space-y-2">
+                    <div class="flex justify-between"><span>User:</span><span id="s-user"></span></div>
+                    <div class="flex justify-between"><span>Nominal:</span><span id="s-nom"></span></div>
+                    <div class="flex justify-between"><span>Biaya Admin (0.7%):</span><span id="s-adm"></span></div>
+                    <hr class="my-2 border-dashed border-black">
+                    <div class="flex justify-between font-bold text-sm"><span>TOTAL:</span><span id="s-total"></span></div>
+                </div>
+            </div>
+            <button onclick="confirmTopupWA()" class="bg-green-500 text-white px-8 py-3 rounded-full font-bold mt-4">Lanjut ke WhatsApp</button>
+        </div>
     </div>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="p-6 flex items-center gap-2 text-white"><div class="bg-blue-600 p-1.5 rounded-lg"><i class="fas fa-bolt text-sm"></i></div><span class="font-bold text-lg tracking-tight">RAMAA PANEL</span></div>
+        <div class="px-6 py-4 flex items-center gap-3 bg-[#1e293b] mx-4 rounded-xl mb-4">
+            <div class="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center text-white font-bold" id="userInitial">U</div>
+            <div class="overflow-hidden"><p id="dispUser" class="text-white text-xs font-bold truncate">User</p><p id="dispSaldo" class="text-[#38bdf8] text-[10px] font-bold">Saldo: Rp 0</p></div>
+        </div>
+        <div class="section-label">Menu Utama</div>
+        <div onclick="swT('order-manual')" id="n-order-manual" class="nav-item active"><i class="fas fa-shopping-cart"></i> Buat Pesanan</div>
+        <div onclick="swT('info')" id="n-info" class="nav-item"><i class="fas fa-bell"></i> Informasi Toko</div>
+        <div class="section-label">Transaksi</div>
+        <div onclick="swT('history')" id="n-history" class="nav-item"><i class="fas fa-history"></i> Riwayat Pesanan</div>
+        <div onclick="swT('deposit')" id="n-deposit" class="nav-item"><i class="fas fa-wallet"></i> Deposit Saldo</div>
+        <div class="section-label">Lainnya</div>
+        <div onclick="swT('profile')" id="n-profile" class="nav-item"><i class="fas fa-cog"></i> Pengaturan Akun</div>
+        <div onclick="swT('report')" id="n-report" class="nav-item"><i class="fas fa-headset"></i> Lapor</div>
+        <div onclick="swT('privacy')" id="n-privacy" class="nav-item"><i class="fas fa-shield-halved"></i> Privacy Policy</div>
+        <div onclick="logout()" class="mt-10 mx-6 bg-white py-2 text-center rounded-lg text-slate-900 font-bold text-xs cursor-pointer">Keluar</div>
+    </aside>
+
+    <main class="main-content" id="mainContent">
+        <header class="bg-white border-b px-8 py-4 flex justify-between items-center sticky top-0 z-50">
+            <h2 id="tabTitle" class="font-bold text-slate-700">Buat Pesanan</h2>
+            <button onclick="toggleSidebar()" class="md:hidden text-slate-600"><i class="fas fa-bars"></i></button>
+        </header>
+
+        <div id="tab-order-manual" class="tab-content active">
+            <div id="statusTokoBox" class="hidden mb-6 p-4 rounded-xl bg-red-100 border border-red-200 text-red-700 text-center font-bold text-xs"></div>
+            <div class="card p-8 max-w-2xl mx-auto mt-10">
+                <h3 class="font-bold text-lg mb-6 text-center uppercase italic tracking-tighter">Pesan Layanan Panel</h3>
+                <label class="text-xs font-bold text-slate-400 mb-2 block uppercase">Pilih Produk</label>
+                <select id="srv" onchange="upP()" class="w-full border p-4 rounded-xl mb-4 outline-none font-bold text-slate-700 bg-slate-50"></select>
+                <label class="text-xs font-bold text-slate-400 mb-2 block uppercase">Link / Target</label>
+                <input type="text" id="target" placeholder="Contoh: https://link-tujuan.com" class="w-full border p-4 rounded-xl mb-4 outline-none">
+                <label class="text-xs font-bold text-slate-400 mb-2 block uppercase">Jumlah</label>
+                <input type="number" id="qty" oninput="upP()" placeholder="Masukan Jumlah" class="w-full border p-4 rounded-xl mb-6 outline-none">
+                <div class="flex justify-between items-center mb-6 p-4 bg-slate-50 rounded-lg border border-dashed border-slate-200"><span class="font-bold text-slate-400">Total Harga:</span><span id="totalDisp" class="text-2xl font-black text-blue-600 tracking-tighter">Rp 0</span></div>
+                <button id="btnOrder" onclick="gas()" class="btn-blue text-lg shadow-lg shadow-blue-200 py-4 uppercase font-black">Beli Sekarang ⚡</button>
+            </div>
+        </div>
+
+        <div id="tab-info" class="tab-content"><div id="info-container" class="max-w-2xl mx-auto space-y-4"></div></div>
+        <div id="tab-history" class="tab-content"><div id="historyList" class="max-w-2xl mx-auto space-y-3"></div></div>
+        <div id="tab-report" class="tab-content">
+            <div class="max-w-xl mx-auto space-y-4">
+                <h3 class="font-black text-slate-800 text-center uppercase italic mb-4">Pusat Laporan 🛠️</h3>
+                <div class="card p-6">
+                    <h4 class="font-bold text-sm mb-3 uppercase tracking-tighter">1. Lapor Lewat Website</h4>
+                    <textarea id="webReport" class="w-full border rounded-xl p-4 h-32 outline-none mb-3 text-sm" placeholder="Sebutkan ID Pesanan dan kendala Anda..."></textarea>
+                    <button onclick="kirimLaporan()" class="btn-blue py-3 font-bold uppercase text-[10px]">Kirim Laporan</button>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <a href="https://wa.me/62882008519349" target="_blank" class="card p-6 flex flex-col items-center justify-center hover:bg-green-50 transition-colors">
+                        <i class="fab fa-whatsapp text-3xl text-green-500 mb-2"></i>
+                        <span class="font-bold text-[10px] text-center uppercase leading-tight">2. Lewat WA Saya</span>
+                    </a>
+                    <a href="https://whatsapp.com/channel/0029VbBvdFz9hXF7A4lHku1P" target="_blank" class="card p-6 flex flex-col items-center justify-center hover:bg-blue-50 transition-colors">
+                        <i class="fas fa-bullhorn text-3xl text-blue-500 mb-2"></i>
+                        <span class="font-bold text-[10px] text-center uppercase leading-tight">3. Saluran Resmi</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div id="tab-deposit" class="tab-content">
+            <div class="card p-8 max-w-md mx-auto mt-10">
+                <h3 class="font-bold text-lg mb-2 text-center uppercase italic">Deposit Saldo</h3>
+                <p class="text-[10px] text-center text-slate-400 mb-6 uppercase">Minimal deposit Rp 1.000</p>
+                <input type="number" id="depNominal" placeholder="Masukan Nominal" class="w-full border p-4 rounded-xl mb-4 outline-none font-bold bg-slate-50 text-center text-xl">
+                <button onclick="reqDeposit()" class="btn-blue py-4 uppercase font-black tracking-widest text-xs">Lanjut Pembayaran</button>
+            </div>
+        </div>
+        <div id="tab-profile" class="tab-content">
+            <div class="card p-8 max-w-lg mx-auto mt-10">
+                <h3 class="font-bold text-lg mb-6 uppercase italic">Informasi Akun</h3>
+                <div class="space-y-4">
+                    <div class="bg-slate-50 p-4 rounded-xl"><label class="text-[9px] font-bold text-slate-400 uppercase">Username</label><p id="p-user" class="font-bold text-slate-700 text-sm"></p></div>
+                    <div class="bg-slate-50 p-4 rounded-xl"><label class="text-[9px] font-bold text-slate-400 uppercase">Email Address</label><p id="p-email" class="font-bold text-slate-700 text-sm"></p></div>
+                    <div class="bg-slate-50 p-4 rounded-xl"><label class="text-[9px] font-bold text-slate-400 uppercase">PIN / Password</label><p id="p-pass" class="font-bold text-slate-700 text-sm"></p></div>
+                </div>
+            </div>
+        </div>
+        <div id="tab-privacy" class="tab-content"><div class="card p-8 max-w-2xl mx-auto mt-10"><h3 class="font-bold text-lg mb-4 italic">Privacy Policy</h3><p class="text-sm text-slate-600 leading-relaxed italic">Kami menjamin keamanan data pribadi Anda. Seluruh data transaksi dan akun disimpan dengan teknologi enkripsi modern.</p></div></div>
+    </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, push, onValue, update, get, query, orderByChild, equalTo, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, set, update, push, onValue, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBn6vVKvPf74V7UUsWWnTI9uRh5FI_urK0",
-            authDomain: "rzones-c08ee.firebaseapp.com",
-            databaseURL: "https://rzones-c08ee-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "rzones-c08ee",
-            storageBucket: "rzones-c08ee.firebasestorage.app",
-            messagingSenderId: "411533215268",
-            appId: "1:411533215268:web:238dbba66bef4907f0fab1"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        const config = { apiKey: "AIzaSyBDHLgM0-KepGnAuqnGjND1LRoEBveo8co", databaseURL: "https://rmai-5211b-default-rtdb.asia-southeast1.firebasedatabase.app" };
+        const app = initializeApp(config); const auth = getAuth(app); const db = getDatabase(app);
         
-        window.vlog = (msg, type = 'info') => {
-            const color = type === 'error' ? 'text-red-400' : (type === 'success' ? 'text-green-400' : 'text-blue-400');
-            document.getElementById('console-logs').innerHTML = `<div><span class="${color}">[${new Date().toLocaleTimeString()}]</span> ${msg}</div>` + document.getElementById('console-logs').innerHTML;
+        let myD = null, isReg = false, pendingDep = {}, isTokoBuka = true;
+
+        // UI HELPERS
+        window.showLogin = () => { document.getElementById('authOverlay').style.display = 'flex'; };
+        window.hideLogin = () => { document.getElementById('authOverlay').style.display = 'none'; };
+
+        // AUTH
+        window.toggleReg = () => { isReg = !isReg; document.getElementById('regBox').classList.toggle('hidden'); document.getElementById('btnAuth').innerText = isReg ? 'DAFTAR' : 'MASUK'; };
+        window.handleAuth = () => {
+            const e = document.getElementById('email').value, p = document.getElementById('password').value, u = document.getElementById('uName').value;
+            if(isReg) createUserWithEmailAndPassword(auth, e, p).then(r => set(ref(db, `users/${r.user.uid}`), { username: u, email: e, password: p, saldo: 0 }));
+            else signInWithEmailAndPassword(auth, e, p).catch(() => alert("Email atau Password salah!"));
         };
 
-        const host = window.location.hostname;
-        const isDashboard = host === "rzone.web.id" || host === "www.rzone.web.id" || host.includes("vercel.app") || host.includes("localhost");
+        onAuthStateChanged(auth, u => {
+            const landing = document.getElementById('landingPage');
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const overlay = document.getElementById('authOverlay');
 
-        window.onload = () => {
-            if (!isDashboard) {
-                document.getElementById('render-screen').classList.remove('hidden');
-                renderSite(host.split('.')[0]);
-            } else {
-                document.getElementById('dashboard-screen').classList.remove('hidden');
-            }
-        };
-
-        // --- TRAFFIC & RENDERER (With 404 Support) ---
-        async function renderSite(sub) {
-            try {
-                const q = query(ref(db, 'repositories'), orderByChild('name'), equalTo(sub));
-                const snap = await get(q);
+            if(u) {
+                landing.style.display = 'none';
+                overlay.style.display = 'none';
+                sidebar.classList.add('logged-in');
+                mainContent.classList.add('logged-in');
                 
-                if (snap.exists()) {
-                    const repoId = Object.keys(snap.val())[0];
-                    const data = snap.val()[repoId];
-                    
-                    // Update Traffic
-                    const currentTraffic = data.traffic || 0;
-                    await update(ref(db, `repositories/${repoId}`), { traffic: currentTraffic + 1 });
-                    
-                    const files = data.files || {};
-                    const index = Object.values(files).find(f => f.name === 'index.html');
-                    
-                    if (index) {
-                        document.open();
-                        document.write(index.content);
-                        document.close();
-                    } else {
-                        show404(sub);
+                onValue(ref(db, `users/${u.uid}`), s => {
+                    myD = s.val(); if(myD) {
+                        document.getElementById('dispUser').innerText = myD.username;
+                        document.getElementById('dispSaldo').innerText = "Saldo: Rp " + (myD.saldo || 0).toLocaleString();
+                        document.getElementById('userInitial').innerText = myD.username.charAt(0).toUpperCase();
+                        document.getElementById('p-user').innerText = myD.username;
+                        document.getElementById('p-email').innerText = myD.email;
+                        document.getElementById('p-pass').innerText = myD.password;
+                        loadOrderHistory(myD.username);
                     }
-                } else {
-                    show404(sub);
-                }
-            } catch(e) { 
-                vlog(e.message, "error"); 
-                show404(sub);
-            }
-        }
-
-        function show404(sub) {
-            document.getElementById('loader').classList.add('hidden');
-            document.getElementById('error-404').classList.remove('hidden');
-            document.getElementById('missing-sub').innerText = sub + ".rzone.web.id";
-            document.body.classList.add('not-found-bg');
-        }
-
-        // --- ADMIN AUTH ---
-        window.handleLogin = () => {
-            if(document.getElementById('pin').value === "190713") {
-                document.getElementById('visual-console').style.display = 'block';
-                document.getElementById('login-ui').classList.add('hidden');
-                document.getElementById('main-ui').classList.remove('hidden');
-                loadAllProjects();
-                vlog("Admin System Unlocked", "success");
-            } else { alert("ACCESS DENIED"); }
-        };
-
-        // --- REPO MANAGEMENT ---
-        let activeRepoId = null;
-        let activeFileId = null;
-
-        function loadAllProjects() {
-            onValue(ref(db, 'repositories'), (snap) => {
-                const list = document.getElementById('project-list');
-                list.innerHTML = '';
-                if(snap.exists()) {
-                    const repos = snap.val();
-                    document.getElementById('total-projects').innerText = Object.keys(repos).length;
-                    Object.entries(repos).forEach(([id, repo]) => {
-                        list.innerHTML += `
-                            <div class="bg-white p-8 rounded-[2.5rem] border border-slate-50 card-project" onclick="openProject('${id}', '${repo.name}')">
-                                <div class="flex justify-between items-start mb-6">
-                                    <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center font-black text-2xl">${repo.name[0].toUpperCase()}</div>
-                                    <div class="text-right">
-                                        <p class="text-[10px] font-black text-slate-300 uppercase">Traffic</p>
-                                        <p class="text-lg font-black text-slate-900">${repo.traffic || 0}</p>
-                                    </div>
-                                </div>
-                                <h3 class="text-2xl font-black text-slate-900 italic uppercase tracking-tighter">${repo.name}</h3>
-                                <p class="text-xs font-mono text-blue-500 mt-1">${repo.name}.rzone.web.id</p>
-                            </div>
-                        `;
-                    });
-                }
-            });
-        }
-
-        window.openProject = async (id, name) => {
-            activeRepoId = id;
-            const snap = await get(ref(db, `repositories/${id}`));
-            const data = snap.val();
-            
-            document.getElementById('main-ui').classList.add('hidden');
-            document.getElementById('editor-ui').classList.remove('hidden');
-            document.getElementById('active-repo-name').innerText = name;
-            document.getElementById('active-repo-url').innerText = `${name}.rzone.web.id`;
-            document.getElementById('repo-traffic').innerText = data.traffic || 0;
-            document.getElementById('btn-preview').onclick = () => window.open(`http://${name}.rzone.web.id`, '_blank');
-            loadRepoFiles(id);
-            vlog("Repo " + name + " loaded", "info");
-        };
-
-        // --- FILE SYSTEM (With index.html Validation) ---
-        window.triggerFilePicker = () => document.getElementById('file-picker').click();
-        document.getElementById('file-picker').onchange = (e) => {
-            const file = e.target.files[0];
-            if(!file) return;
-            if(file.name !== "index.html") {
-                vlog("Upload Error: Must be index.html", "error");
-                alert("Wajib index.html!");
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = async (ev) => {
-                vlog("Cloud Syncing index.html...", "info");
-                await push(ref(db, `repositories/${activeRepoId}/files`), {
-                    name: "index.html",
-                    content: ev.target.result
                 });
-                vlog("Deployment Successful", "success");
-            };
-            reader.readAsText(file);
-        };
+            } else {
+                landing.style.display = 'block';
+                sidebar.classList.remove('logged-in');
+                mainContent.classList.remove('logged-in');
+            }
+        });
 
-        function loadRepoFiles(repoId) {
-            onValue(ref(db, `repositories/${repoId}/files`), (snap) => {
-                const sidebar = document.getElementById('file-sidebar');
-                sidebar.innerHTML = '';
-                if(snap.exists()) {
-                    Object.entries(snap.val()).forEach(([fid, file]) => {
-                        sidebar.innerHTML += `
-                            <div class="p-4 bg-slate-50 rounded-2xl flex justify-between items-center cursor-pointer hover:bg-blue-50 transition-all" onclick="loadEditor('${fid}', '${file.name}', \`${b64(file.content)}\`)">
-                                <span class="text-xs font-bold text-slate-600 uppercase italic">📄 ${file.name}</span>
-                                <button onclick="event.stopPropagation(); deleteFile('${fid}')" class="text-red-400 hover:text-red-600 text-[10px] font-black">X</button>
-                            </div>
-                        `;
-                    });
-                }
+        // Semuanya di bawah ini tetap asli dari kode user tanpa perubahan logika
+        function loadOrderHistory(username) {
+            const orderRef = ref(db, 'orders');
+            onValue(orderRef, (snapshot) => {
+                const list = document.getElementById('historyList');
+                list.innerHTML = "";
+                let hasOrder = false;
+                snapshot.forEach((childSnapshot) => {
+                    const data = childSnapshot.val();
+                    if (data.username === username) {
+                        hasOrder = true;
+                        const statusColor = data.status === "SUCCESS" ? "text-green-500" : (data.status === "FAILED" ? "text-red-500" : "text-yellow-500");
+                        const item = `
+                            <div class="card p-5">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">${data.time}</div>
+                                    <div class="text-[10px] font-black uppercase tracking-tighter ${statusColor}">${data.status}</div>
+                                </div>
+                                <h4 class="font-bold text-sm text-slate-700 uppercase">${data.service}</h4>
+                                <p class="text-[10px] text-slate-400 truncate mt-1">Target: ${data.target}</p>
+                                <div class="flex justify-between items-center mt-3 pt-3 border-t border-dashed">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase">Jumlah: ${data.qty}</span>
+                                    <span class="text-xs font-black text-blue-600 italic">Rp ${data.price.toLocaleString()}</span>
+                                </div>
+                            </div>`;
+                        list.innerHTML = item + list.innerHTML;
+                    }
+                });
+                if (!hasOrder) list.innerHTML = "<p class='text-center text-xs text-slate-400 uppercase italic'>Belum ada riwayat pesanan.</p>";
             });
         }
 
-        window.loadEditor = (fid, name, contentB64) => {
-            activeFileId = fid;
-            document.getElementById('editor-area').classList.remove('hidden');
-            document.getElementById('editing-name').innerText = name.toUpperCase();
-            document.getElementById('code-input').value = b64_dec(contentB64);
-            document.getElementById('save-indicator').innerText = "Ready";
-            document.getElementById('save-indicator').className = "text-[10px] font-bold text-slate-300 italic";
-        };
-
-        window.markUnsaved = () => {
-            document.getElementById('save-indicator').innerText = "● Unsaved Changes";
-            document.getElementById('save-indicator').className = "text-[10px] font-bold text-orange-400 italic";
-        };
-
-        window.saveCurrentFile = async () => {
-            document.getElementById('save-indicator').innerText = "○ Syncing Cloud...";
-            const content = document.getElementById('code-input').value;
-            await update(ref(db, `repositories/${activeRepoId}/files/${activeFileId}`), { content: content });
-            document.getElementById('save-indicator').innerText = "● Cloud Updated";
-            document.getElementById('save-indicator').className = "text-[10px] font-bold text-green-500 italic";
-            vlog("Manual save triggered", "success");
-        };
-
-        window.deleteCurrentRepo = async () => {
-            if(confirm("Hapus seluruh project dan data traffic?")) {
-                await remove(ref(db, `repositories/${activeRepoId}`));
-                location.reload();
+        onValue(ref(db, 'pengaturan'), (snapshot) => {
+            const settings = snapshot.val();
+            if (settings) {
+                isTokoBuka = settings.toko;
+                const banner = document.getElementById('statusTokoBox'); const btn = document.getElementById('btnOrder');
+                if (!isTokoBuka) {
+                    banner.innerText = "🚨 TOKO SEDANG TUTUP: " + (settings.keterangan || "Mohon kembali nanti.");
+                    banner.classList.remove('hidden'); btn.disabled = true; btn.classList.replace('bg-blue-600', 'bg-slate-400'); btn.innerText = "TOKO SEDANG TUTUP";
+                } else { banner.classList.add('hidden'); btn.disabled = false; btn.classList.replace('bg-slate-400', 'bg-blue-600'); btn.innerText = "BELI SEKARANG ⚡"; }
             }
-        };
+        });
 
-        window.deleteFile = async (fid) => {
-            if(confirm("Hapus file?")) {
-                await remove(ref(db, `repositories/${activeRepoId}/files/${fid}`));
-                document.getElementById('editor-area').classList.add('hidden');
+        onValue(ref(db, 'broadcast'), (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                const infoCont = document.getElementById('info-container');
+                infoCont.innerHTML = `<div class="card p-6 border-l-4 border-blue-500"><h4 class="font-black text-slate-800 uppercase italic mb-1 text-sm">${data.judul}</h4><p class="text-xs text-slate-500 leading-relaxed">${data.pesan}</p><p class="text-[8px] text-slate-400 mt-4 uppercase font-bold">Diterima: ${new Date(data.id).toLocaleString()}</p></div>` + infoCont.innerHTML;
+                const lastNotif = localStorage.getItem('lastNotifId');
+                if (lastNotif !== String(data.id)) {
+                    document.getElementById('n-judul').innerText = data.judul; document.getElementById('n-pesan').innerText = data.pesan;
+                    document.getElementById('notif-popup').style.display = 'flex'; localStorage.setItem('lastNotifId', data.id);
+                }
             }
+        });
+        window.closeNotif = () => document.getElementById('notif-popup').style.display = 'none';
+
+        window.swT = (t) => {
+            document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+            document.getElementById('tab-'+t).classList.add('active'); document.getElementById('n-'+t).classList.add('active');
+            document.getElementById('tabTitle').innerText = document.getElementById('n-'+t).innerText;
+            if(window.innerWidth < 768) toggleSidebar();
+        };
+        window.toggleSidebar = () => document.getElementById('sidebar').classList.toggle('open');
+
+        window.reqDeposit = () => {
+            const n = parseInt(document.getElementById('depNominal').value);
+            if(n < 1000) return alert("Minimal Deposit Rp 1.000");
+            const adminFee = Math.ceil(n * 0.007); const total = n + adminFee;
+            pendingDep = { nominal: n, fee: adminFee, total: total };
+            document.getElementById('s-user').innerText = myD.username;
+            document.getElementById('s-nom').innerText = "Rp " + n.toLocaleString();
+            document.getElementById('s-adm').innerText = "Rp " + adminFee.toLocaleString();
+            document.getElementById('s-total').innerText = "Rp " + total.toLocaleString();
+            document.getElementById('receipt-modal').style.display = 'flex';
         };
 
-        window.createProject = async () => {
-            const n = prompt("Project Name:");
-            if(n) {
-                const c = n.toLowerCase().replace(/\s/g, '-');
-                await set(push(ref(db, 'repositories')), { name: c, traffic: 0, createdAt: Date.now() });
-                vlog("New Endpoint: " + c, "success");
-            }
+        window.confirmTopupWA = () => {
+            const depKey = push(ref(db, 'topup_requests')).key;
+            set(ref(db, 'topup_requests/' + depKey), { 
+                uid: auth.currentUser.uid, 
+                username: myD.username, 
+                nominal: pendingDep.nominal, 
+                total: pendingDep.total, 
+                status: "PENDING",
+                time: new Date().toLocaleString()
+            });
+            window.open(`https://wa.me/62882008519349?text=DEPOSIT BARU %0AUsername: ${myD.username} %0ANominal: Rp ${pendingDep.nominal.toLocaleString()} %0ATotal Transfer: Rp ${pendingDep.total.toLocaleString()}`, '_blank');
+            document.getElementById('receipt-modal').style.display = 'none';
         };
 
-        // --- HELPERS ---
-        function b64(s) { return btoa(unescape(encodeURIComponent(s))); }
-        function b64_dec(s) { return decodeURIComponent(escape(atob(s))); }
+        window.kirimLaporan = () => {
+            const p = document.getElementById('webReport').value; if(!p) return alert("Isi laporan!");
+            push(ref(db, 'reports'), { username: myD.username, pesan: p, timestamp: new Date().toLocaleString() });
+            alert("Laporan terkirim ke sistem!"); document.getElementById('webReport').value = "";
+        };
 
+        onValue(ref(db, 'layanan_biasa'), s => {
+            const srv = document.getElementById('srv'); srv.innerHTML = "";
+            s.forEach(d => { srv.innerHTML += `<option value="${d.val().nama}" data-price="${d.val().harga}">${d.val().nama} (Rp ${d.val().harga})</option>`; });
+            upP();
+        });
+
+        window.upP = () => {
+            const s = document.getElementById('srv'); if(!s.options[s.selectedIndex]) return;
+            const price = s.options[s.selectedIndex].dataset.price;
+            const q = document.getElementById('qty').value || 0;
+            document.getElementById('totalDisp').innerText = "Rp " + (price * q).toLocaleString();
+        };
+
+        window.gas = async () => {
+            if(!isTokoBuka) return alert("Toko tutup!");
+            const s = document.getElementById('srv'); const o = s.options[s.selectedIndex];
+            const q = parseInt(document.getElementById('qty').value), t = document.getElementById('target').value;
+            const price = parseInt(o.dataset.price) * q;
+            if(!t || isNaN(q) || q <= 0) return alert("Lengkapi data!");
+            if(myD.saldo < price) return alert("Saldo kurang!");
+            await update(ref(db, `users/${auth.currentUser.uid}`), { saldo: myD.saldo - price });
+            await push(ref(db, 'orders'), { username: myD.username, service: o.value, target: t, qty: q, price: price, status: "PENDING", time: new Date().toLocaleString() });
+            alert("Pesanan sukses!");
+        };
+
+        window.logout = () => signOut(auth).then(()=>location.reload());
     </script>
 </body>
 </html>
