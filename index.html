@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RZone Cloud Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap');
+        body { background-color: #000; color: #fff; font-family: sans-serif; }
+        .glass { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
+        .editor-font { font-family: 'JetBrains Mono', monospace; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="render-screen" class="hidden min-h-screen flex items-center justify-center">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+            <p class="text-gray-500 tracking-widest text-sm">LOADING DEPLOYMENT...</p>
+        </div>
+    </div>
+
+    <div id="dashboard-screen" class="hidden">
+        <div id="login-ui" class="min-h-screen flex items-center justify-center p-6">
+            <div class="glass p-8 rounded-3xl w-full max-w-sm text-center">
+                <h1 class="text-4xl font-black tracking-tighter mb-2">RZONE</h1>
+                <p class="text-gray-500 text-sm mb-8">Cloud Platform by @maramadhona</p>
+                <input type="password" id="pin" placeholder="PIN: 190713" class="w-full p-4 bg-white/5 border border-white/10 rounded-2xl mb-4 text-center focus:outline-none focus:border-blue-500 transition">
+                <button onclick="handleLogin()" class="w-full bg-white text-black py-4 rounded-2xl font-bold hover:bg-gray-200 transition">Unlock Dashboard</button>
+            </div>
+        </div>
+
+        <div id="main-ui" class="hidden p-6 lg:p-12 max-w-6xl mx-auto">
+            <div class="flex justify-between items-center mb-12">
+                <h2 class="text-2xl font-bold tracking-tighter">My Repositories</h2>
+                <button onclick="createProject()" class="bg-blue-600 px-6 py-2 rounded-full font-bold text-sm">+ New Project</button>
+            </div>
+            <div id="project-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
+
+        <div id="editor-ui" class="hidden p-6 lg:p-12">
+            <div class="max-w-6xl mx-auto">
+                <button onclick="location.reload()" class="text-gray-500 hover:text-white mb-6 flex items-center gap-2">← Dashboard</button>
+                <div class="flex flex-col md:flex-row justify-between mb-8 gap-4">
+                    <div>
+                        <h2 id="active-repo-name" class="text-3xl font-black italic"></h2>
+                        <p id="active-repo-url" class="text-blue-500 text-sm cursor-pointer"></p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="addNewFile()" class="glass px-6 py-2 rounded-xl text-sm font-bold hover:bg-white/5">Add File</button>
+                        <button onclick="openLiveSite()" class="bg-white text-black px-6 py-2 rounded-xl text-sm font-bold">Open Site</button>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                    <div id="file-sidebar" class="space-y-2"></div>
+                    <div class="lg:col-span-3">
+                        <div id="editor-area" class="hidden">
+                            <p id="editing-name" class="text-xs text-gray-600 mb-2 font-mono"></p>
+                            <textarea id="code-input" class="w-full h-[500px] bg-[#0a0a0a] border border-white/10 p-6 editor-font text-blue-300 focus:outline-none rounded-2xl resize-none shadow-2xl" spellcheck="false"></textarea>
+                            <button onclick="saveCurrentFile()" class="mt-4 bg-blue-600 px-8 py-3 rounded-xl font-bold shadow-lg shadow-blue-900/20">Save to Cloud</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, push, onValue, update, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // CONFIG ASLI MILIK KAMU
+        const firebaseConfig = {
+            apiKey: "AIzaSyBn6vVKvPf74V7UUsWWnTI9uRh5FI_urK0",
+            authDomain: "rzones-c08ee.firebaseapp.com",
+            databaseURL: "https://rzones-c08ee-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "rzones-c08ee",
+            storageBucket: "rzones-c08ee.firebasestorage.app",
+            messagingSenderId: "411533215268",
+            appId: "1:411533215268:web:238dbba66bef4907f0fab1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // --- DETEKSI SUBDOMAIN ---
+        const host = window.location.hostname;
+        const parts = host.split('.');
+        
+        // Mode Renderer (misal: portofolio.rzone.web.id)
+        if (parts.length > 3 || (parts.length === 3 && parts[0] !== 'www')) {
+            document.getElementById('render-screen').classList.remove('hidden');
+            const sub = parts[0];
+            renderSite(sub);
+        } else {
+            // Mode Dashboard
+            document.getElementById('dashboard-screen').classList.remove('hidden');
+        }
+
+        async function renderSite(sub) {
+            const q = query(ref(db, 'repositories'), orderByChild('name'), equalTo(sub));
+            const snap = await get(q);
+            if (snap.exists()) {
+                const data = Object.values(snap.val())[0];
+                const files = data.files || {};
+                const index = Object.values(files).find(f => f.name === 'index.html') || Object.values(files)[0];
+                if (index) {
+                    document.open();
+                    document.write(index.content);
+                    document.close();
+                } else { document.body.innerHTML = "Repo kosong."; }
+            } else { document.body.innerHTML = "404: Website Belum Dibuat."; }
+        }
+
+        // --- DASHBOARD SYSTEM ---
+        let activeRepoId = null;
+        let activeFileId = null;
+
+        window.handleLogin = () => {
+            if(document.getElementById('pin').value === "190713") {
+                document.getElementById('login-ui').classList.add('hidden');
+                document.getElementById('main-ui').classList.remove('hidden');
+                loadAllProjects();
+            } else { alert("PIN Salah, Wak!"); }
+        };
+
+        window.createProject = async () => {
+            const name = prompt("Nama Project (huruf kecil, tanpa spasi):");
+            if(name) {
+                const newRef = push(ref(db, 'repositories'));
+                await set(newRef, { name: name.toLowerCase().replace(/\s/g, '-'), createdAt: Date.now() });
+            }
+        };
+
+        function loadAllProjects() {
+            onValue(ref(db, 'repositories'), (snap) => {
+                const list = document.getElementById('project-list');
+                list.innerHTML = '';
+                if(snap.exists()) {
+                    Object.entries(snap.val()).forEach(([id, repo]) => {
+                        list.innerHTML += `
+                            <div onclick="openProject('${id}', '${repo.name}')" class="glass p-6 rounded-3xl cursor-pointer hover:bg-white/5 transition border-white/5 hover:border-white/20">
+                                <div class="w-12 h-12 bg-blue-600 rounded-2xl mb-4 flex items-center justify-center font-bold text-xl">${repo.name[0].toUpperCase()}</div>
+                                <h3 class="text-xl font-bold">${repo.name}</h3>
+                                <p class="text-xs text-gray-500 font-mono mt-1">${repo.name}.rzone.web.id</p>
+                            </div>
+                        `;
+                    });
+                }
+            });
+        }
+
+        window.openProject = (id, name) => {
+            activeRepoId = id;
+            document.getElementById('main-ui').classList.add('hidden');
+            document.getElementById('editor-ui').classList.remove('hidden');
+            document.getElementById('active-repo-name').innerText = name;
+            document.getElementById('active-repo-url').innerText = `${name}.rzone.web.id`;
+            loadRepoFiles(id);
+        };
+
+        window.addNewFile = async () => {
+            const fileName = prompt("Nama file (contoh: index.html):");
+            if(fileName) {
+                await push(ref(db, `repositories/${activeRepoId}/files`), { name: fileName, content: "" });
+            }
+        };
+
+        function loadRepoFiles(repoId) {
+            onValue(ref(db, `repositories/${repoId}/files`), (snap) => {
+                const sidebar = document.getElementById('file-sidebar');
+                sidebar.innerHTML = '';
+                if(snap.exists()) {
+                    Object.entries(snap.val()).forEach(([fid, file]) => {
+                        sidebar.innerHTML += `
+                            <button onclick="loadEditor('${fid}', '${file.name}', \`${btoa(encodeURIComponent(file.content))}\`)" class="w-full text-left p-4 rounded-xl text-sm font-mono glass hover:bg-white/10 transition mb-2">
+                                📄 ${file.name}
+                            </button>
+                        `;
+                    });
+                }
+            });
+        }
+
+        window.loadEditor = (fid, name, contentB64) => {
+            activeFileId = fid;
+            document.getElementById('editor-area').classList.remove('hidden');
+            document.getElementById('editing-name').innerText = `EDITING: ${name}`;
+            document.getElementById('code-input').value = decodeURIComponent(atob(contentB64));
+        };
+
+        window.saveCurrentFile = async () => {
+            const newContent = document.getElementById('code-input').value;
+            await update(ref(db, `repositories/${activeRepoId}/files/${activeFileId}`), { content: newContent });
+            alert("Berhasil Disimpan!");
+        };
+
+        window.openLiveSite = () => {
+            const url = document.getElementById('active-repo-url').innerText;
+            window.open(`http://${url}`, '_blank');
+        };
+
+    </script>
+</body>
+</html>
