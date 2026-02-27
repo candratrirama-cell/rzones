@@ -3,86 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GoR 1.1 - Ultimate Admin</title>
+    <title>GoR 1.1 - Cloud OS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap');
-        :root { --primary: #2563eb; --bg: #f8fafc; --text: #0f172a; }
-        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; transition: 0.3s; }
-        .glass { background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.05); }
-        .editor-font { font-family: 'JetBrains Mono', monospace; }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono&family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
+        :root { --primary: #2563eb; --bg: #f8fafc; }
+        body { background: var(--bg); color: #0f172a; font-family: 'Plus Jakarta Sans', sans-serif; transition: 0.3s; }
+        .glass { background: rgba(255,255,255,0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.3); }
         .hidden { display: none !important; }
-        /* Style Console Tetap Sama tapi Defaultnya Hidden */
-        #visual-console { background: #0f172a; color: #38bdf8; font-family: 'JetBrains Mono'; font-size: 10px; border-top: 4px solid var(--primary); display: none; }
-        .btn-action { transition: all 0.2s; cursor: pointer; }
-        .btn-action:active { transform: scale(0.95); }
+        #visual-console { background: #020617; color: #38bdf8; font-family: 'JetBrains Mono'; font-size: 10px; display: none; }
+        .card-project { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+        .card-project:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); border-color: var(--primary); }
+        textarea { font-family: 'JetBrains Mono', monospace; font-size: 14px !important; resize: none; }
+        /* 404 Style */
+        .not-found-bg { background: radial-gradient(circle, #f8fafc 0%, #e2e8f0 100%); }
     </style>
 </head>
 <body>
 
     <input type="file" id="file-picker" class="hidden" accept=".html">
 
-    <div id="render-screen" class="min-h-screen flex items-center justify-center">
-        <div class="text-center">
+    <div id="render-screen" class="min-h-screen flex items-center justify-center hidden">
+        <div id="loader" class="text-center">
             <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600 mx-auto mb-4"></div>
-            <p class="text-blue-900 font-bold text-xs tracking-widest uppercase">GoR 1.1 Loading...</p>
+            <p class="text-blue-900 font-bold text-xs tracking-widest uppercase">GoR 1.1 Resolving...</p>
+        </div>
+        <div id="error-404" class="hidden text-center p-6">
+            <h1 class="text-9xl font-black text-slate-200">404</h1>
+            <p class="text-2xl font-bold text-slate-800 -mt-8 mb-4">Project Not Found</p>
+            <p class="text-slate-500 mb-8">Maaf Wak, alamat <span id="missing-sub" class="text-blue-600 font-mono"></span> belum terdaftar di RZone.</p>
+            <a href="https://rzone.web.id" class="bg-blue-600 text-white px-8 py-3 rounded-full font-bold shadow-lg shadow-blue-200">Bikin Project Sendiri</a>
         </div>
     </div>
 
     <div id="dashboard-screen" class="hidden min-h-screen">
         
         <div id="login-ui" class="min-h-screen flex items-center justify-center p-6">
-            <div class="glass p-10 rounded-[2.5rem] w-full max-w-sm text-center shadow-2xl">
-                <h1 class="text-5xl font-black italic text-blue-600 mb-2">RZONE</h1>
-                <p class="text-[10px] font-bold text-gray-400 mb-8 tracking-[0.3em]">ADMIN PORTAL GoR 1.1</p>
-                <input type="password" id="pin" placeholder="••••••" class="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl mb-4 text-center text-2xl outline-none focus:border-blue-500">
-                <button onclick="handleLogin()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg">UNLOCK ADMIN</button>
-            </div>
-        </div>
-
-        <div id="main-ui" class="hidden p-6 lg:p-12 max-w-6xl mx-auto">
-            <div class="flex justify-between items-end mb-12">
-                <div>
-                    <h2 class="text-4xl font-black text-slate-900 italic">REPOSITORIES</h2>
-                    <p class="text-xs text-blue-500 font-bold mt-1">Manage your cloud deployments</p>
+            <div class="glass p-10 rounded-[3rem] w-full max-w-sm text-center shadow-2xl border-white">
+                <div class="w-20 h-20 bg-blue-600 rounded-3xl mx-auto mb-6 flex items-center justify-center shadow-xl shadow-blue-200">
+                    <span class="text-white text-4xl font-black italic">R</span>
                 </div>
-                <button onclick="createProject()" class="bg-slate-900 text-white px-8 py-3 rounded-2xl font-bold text-sm btn-action shadow-xl">+ NEW PROJECT</button>
+                <h1 class="text-3xl font-extrabold text-slate-900 mb-1">Welcome Admin</h1>
+                <p class="text-xs font-bold text-slate-400 mb-8 uppercase tracking-widest">Version GoR 1.1</p>
+                <input type="password" id="pin" placeholder="••••••" class="w-full p-4 bg-white border-2 border-slate-100 rounded-2xl mb-4 text-center text-2xl outline-none focus:border-blue-500 transition-all">
+                <button onclick="handleLogin()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-blue-700 active:scale-95 transition-all">UNLOCK SYSTEM</button>
             </div>
-            <div id="project-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
         </div>
 
-        <div id="editor-ui" class="hidden p-4 lg:p-12">
-            <div class="max-w-7xl mx-auto">
-                <div class="flex items-center gap-4 mb-8">
-                    <button onclick="location.reload()" class="p-3 bg-white rounded-xl shadow-sm text-slate-400">←</button>
-                    <div>
-                        <h2 id="active-repo-name" class="text-2xl font-black text-slate-900 italic"></h2>
-                        <p id="active-repo-url" class="text-xs text-blue-500 font-mono"></p>
+        <div id="main-ui" class="hidden p-6 lg:p-12 max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
+                <div>
+                    <h2 class="text-5xl font-black text-slate-900 tracking-tighter italic">REPOS</h2>
+                    <p class="text-slate-500 font-medium">Monitoring <span id="total-projects" class="text-blue-600 font-bold">0</span> active deployments</p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="showQuickStats()" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 font-bold text-xs">📊 STATS</button>
+                    <button onclick="createProject()" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold text-xs shadow-xl active:scale-95 transition-all">+ NEW DEPLOY</button>
+                </div>
+            </div>
+            
+            <div id="project-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-32"></div>
+        </div>
+
+        <div id="editor-ui" class="hidden p-4 lg:p-8">
+            <div class="max-w-screen-2xl mx-auto">
+                <div class="flex items-center justify-between mb-8">
+                    <div class="flex items-center gap-4">
+                        <button onclick="location.reload()" class="p-4 bg-white rounded-2xl shadow-sm text-slate-400 font-bold hover:text-blue-600">←</button>
+                        <div>
+                            <h2 id="active-repo-name" class="text-2xl font-black text-slate-900 italic uppercase"></h2>
+                            <div class="flex items-center gap-3">
+                                <span class="flex items-center gap-1 text-[10px] font-bold text-green-500 bg-green-50 px-2 py-0.5 rounded-full">
+                                    <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-ping"></span> LIVE
+                                </span>
+                                <p id="active-repo-url" class="text-xs text-blue-500 font-mono"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="bg-white px-4 py-2 rounded-xl border border-slate-100 text-center">
+                            <p class="text-[10px] text-slate-400 font-bold uppercase">Traffic</p>
+                            <p id="repo-traffic" class="text-sm font-black text-slate-900">0</p>
+                        </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 pb-32">
-                    <div class="space-y-4">
-                        <div class="bg-white p-4 rounded-3xl shadow-sm border border-gray-100">
-                            <p class="text-[10px] font-black text-slate-400 mb-4 tracking-widest uppercase">Files</p>
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <div class="lg:col-span-3 space-y-4">
+                        <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
+                            <p class="text-[10px] font-black text-slate-400 mb-4 tracking-widest uppercase">Cloud Explorer</p>
                             <div id="file-sidebar" class="space-y-2"></div>
-                            <button onclick="triggerFilePicker()" class="w-full mt-4 p-4 border-2 border-dashed border-blue-100 rounded-2xl text-blue-500 text-xs font-bold hover:bg-blue-50">
-                                + IMPORT INDEX.HTML
+                            <button onclick="triggerFilePicker()" class="w-full mt-6 p-4 border-2 border-dashed border-blue-100 rounded-2xl text-blue-600 text-xs font-black hover:bg-blue-50 transition-all">
+                                IMPORT INDEX.HTML
                             </button>
                         </div>
-                        <button onclick="deleteCurrentRepo()" class="w-full p-4 bg-red-50 text-red-500 rounded-2xl text-xs font-bold border border-red-100 btn-action">DELETE REPOSITORY</button>
+                        <button onclick="deleteCurrentRepo()" class="w-full p-4 bg-red-50 text-red-500 rounded-2xl text-xs font-black border border-red-100 hover:bg-red-500 hover:text-white transition-all">TERMINATE REPO</button>
                     </div>
 
-                    <div class="lg:col-span-3">
+                    <div class="lg:col-span-9">
                         <div id="editor-area" class="hidden space-y-4">
-                            <div class="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm">
-                                <span id="editing-name" class="text-xs font-mono font-bold text-slate-500"></span>
+                            <div class="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-slate-50">
+                                <div class="flex gap-4 items-center">
+                                    <span id="editing-name" class="text-xs font-mono font-bold text-slate-400"></span>
+                                    <span id="save-indicator" class="text-[10px] font-bold text-slate-300 italic">Ready</span>
+                                </div>
                                 <div class="flex gap-2">
-                                    <button onclick="saveCurrentFile()" class="bg-blue-600 text-white px-6 py-2 rounded-xl text-xs font-black btn-action">SAVE</button>
-                                    <button id="btn-preview" class="bg-slate-100 text-slate-600 px-6 py-2 rounded-xl text-xs font-black btn-action">PREVIEW</button>
+                                    <button onclick="saveCurrentFile()" class="bg-blue-600 text-white px-8 py-2 rounded-xl text-xs font-black shadow-lg shadow-blue-100 active:scale-95 transition-all">SAVE CLOUD</button>
+                                    <button id="btn-preview" class="bg-slate-900 text-white px-6 py-2 rounded-xl text-xs font-black active:scale-95 transition-all">VIEW LIVE</button>
                                 </div>
                             </div>
-                            <textarea id="code-input" class="w-full h-[60vh] p-8 editor-font rounded-[2.5rem] border-2 border-white shadow-2xl focus:outline-none focus:border-blue-200" spellcheck="false"></textarea>
+                            <textarea id="code-input" class="w-full h-[65vh] p-8 rounded-[2.5rem] border-2 border-white shadow-2xl focus:outline-none focus:border-blue-100 bg-white" spellcheck="false" oninput="markUnsaved()"></textarea>
                         </div>
                     </div>
                 </div>
@@ -90,8 +120,8 @@
         </div>
     </div>
 
-    <div id="visual-console" class="fixed bottom-0 left-0 w-full h-28 overflow-y-auto p-4 z-[9999]">
-        <div id="console-logs" class="space-y-1">System Secure Initialized...</div>
+    <div id="visual-console" class="fixed bottom-0 left-0 w-full h-28 overflow-y-auto p-4 z-[9999] border-t border-slate-800">
+        <div id="console-logs" class="space-y-1">Cloud Console GoR 1.1 Ready...</div>
     </div>
 
     <script type="module">
@@ -111,13 +141,9 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         
-        // Fungsi Log hanya bekerja jika Console terlihat
         window.vlog = (msg, type = 'info') => {
-            const consoleEl = document.getElementById('visual-console');
-            if(consoleEl.style.display === 'block') {
-                const color = type === 'error' ? 'text-red-400' : (type === 'success' ? 'text-green-400' : 'text-blue-300');
-                document.getElementById('console-logs').innerHTML = `<div><span class="${color}">[${new Date().toLocaleTimeString()}]</span> ${msg}</div>` + document.getElementById('console-logs').innerHTML;
-            }
+            const color = type === 'error' ? 'text-red-400' : (type === 'success' ? 'text-green-400' : 'text-blue-400');
+            document.getElementById('console-logs').innerHTML = `<div><span class="${color}">[${new Date().toLocaleTimeString()}]</span> ${msg}</div>` + document.getElementById('console-logs').innerHTML;
         };
 
         const host = window.location.hostname;
@@ -125,70 +151,65 @@
 
         window.onload = () => {
             if (!isDashboard) {
+                document.getElementById('render-screen').classList.remove('hidden');
                 renderSite(host.split('.')[0]);
             } else {
-                document.getElementById('render-screen').classList.add('hidden');
                 document.getElementById('dashboard-screen').classList.remove('hidden');
             }
         };
 
-        // --- AUTH & CONSOLE LOGIC ---
+        // --- TRAFFIC & RENDERER (With 404 Support) ---
+        async function renderSite(sub) {
+            try {
+                const q = query(ref(db, 'repositories'), orderByChild('name'), equalTo(sub));
+                const snap = await get(q);
+                
+                if (snap.exists()) {
+                    const repoId = Object.keys(snap.val())[0];
+                    const data = snap.val()[repoId];
+                    
+                    // Update Traffic
+                    const currentTraffic = data.traffic || 0;
+                    await update(ref(db, `repositories/${repoId}`), { traffic: currentTraffic + 1 });
+                    
+                    const files = data.files || {};
+                    const index = Object.values(files).find(f => f.name === 'index.html');
+                    
+                    if (index) {
+                        document.open();
+                        document.write(index.content);
+                        document.close();
+                    } else {
+                        show404(sub);
+                    }
+                } else {
+                    show404(sub);
+                }
+            } catch(e) { 
+                vlog(e.message, "error"); 
+                show404(sub);
+            }
+        }
+
+        function show404(sub) {
+            document.getElementById('loader').classList.add('hidden');
+            document.getElementById('error-404').classList.remove('hidden');
+            document.getElementById('missing-sub').innerText = sub + ".rzone.web.id";
+            document.body.classList.add('not-found-bg');
+        }
+
+        // --- ADMIN AUTH ---
         window.handleLogin = () => {
             if(document.getElementById('pin').value === "190713") {
-                // TAMPILKAN CONSOLE HANYA SETELAH LOGIN BERHASIL
                 document.getElementById('visual-console').style.display = 'block';
-                vlog("Admin Authenticated", "success");
-                
                 document.getElementById('login-ui').classList.add('hidden');
                 document.getElementById('main-ui').classList.remove('hidden');
                 loadAllProjects();
-            } else { 
-                alert("PIN SALAH!");
-            }
+                vlog("Admin System Unlocked", "success");
+            } else { alert("ACCESS DENIED"); }
         };
 
-        // --- IMPORT FILE (index.html Mandatory) ---
-        window.triggerFilePicker = () => document.getElementById('file-picker').click();
-        document.getElementById('file-picker').onchange = (e) => {
-            const file = e.target.files[0];
-            if(!file) return;
-            if(file.name !== "index.html") {
-                vlog("Reject: File must be index.html", "error");
-                alert("Wajib upload file bernama index.html!");
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                vlog("Uploading index.html...", "info");
-                await push(ref(db, `repositories/${activeRepoId}/files`), {
-                    name: "index.html",
-                    content: event.target.result,
-                    createdAt: Date.now()
-                });
-                vlog("Index.html Uploaded", "success");
-            };
-            reader.readAsText(file);
-        };
-
-        // --- CRUD REPOSITORY ---
-        window.createProject = async () => {
-            const name = prompt("Project Name:");
-            if(name) {
-                const clean = name.toLowerCase().replace(/\s/g, '-');
-                await set(push(ref(db, 'repositories')), { name: clean, createdAt: Date.now() });
-                vlog("Project Created: " + clean, "success");
-            }
-        };
-
-        window.deleteCurrentRepo = async () => {
-            if(confirm("Hapus seluruh project ini?")) {
-                vlog("Deleting project...", "error");
-                await remove(ref(db, `repositories/${activeRepoId}`));
-                location.reload();
-            }
-        };
-
-        // --- CORE FUNCTIONS ---
+        // --- REPO MANAGEMENT ---
         let activeRepoId = null;
         let activeFileId = null;
 
@@ -197,12 +218,20 @@
                 const list = document.getElementById('project-list');
                 list.innerHTML = '';
                 if(snap.exists()) {
-                    Object.entries(snap.val()).forEach(([id, repo]) => {
+                    const repos = snap.val();
+                    document.getElementById('total-projects').innerText = Object.keys(repos).length;
+                    Object.entries(repos).forEach(([id, repo]) => {
                         list.innerHTML += `
-                            <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-blue-50 btn-action" onclick="openProject('${id}', '${repo.name}')">
-                                <div class="w-14 h-14 bg-blue-600 text-white rounded-2xl mb-6 flex items-center justify-center font-black text-2xl">${repo.name[0].toUpperCase()}</div>
-                                <h3 class="text-2xl font-black text-slate-900 italic uppercase">${repo.name}</h3>
-                                <p class="text-xs font-mono text-blue-500 mt-2">${repo.name}.rzone.web.id</p>
+                            <div class="bg-white p-8 rounded-[2.5rem] border border-slate-50 card-project" onclick="openProject('${id}', '${repo.name}')">
+                                <div class="flex justify-between items-start mb-6">
+                                    <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center font-black text-2xl">${repo.name[0].toUpperCase()}</div>
+                                    <div class="text-right">
+                                        <p class="text-[10px] font-black text-slate-300 uppercase">Traffic</p>
+                                        <p class="text-lg font-black text-slate-900">${repo.traffic || 0}</p>
+                                    </div>
+                                </div>
+                                <h3 class="text-2xl font-black text-slate-900 italic uppercase tracking-tighter">${repo.name}</h3>
+                                <p class="text-xs font-mono text-blue-500 mt-1">${repo.name}.rzone.web.id</p>
                             </div>
                         `;
                     });
@@ -210,14 +239,41 @@
             });
         }
 
-        window.openProject = (id, name) => {
+        window.openProject = async (id, name) => {
             activeRepoId = id;
+            const snap = await get(ref(db, `repositories/${id}`));
+            const data = snap.val();
+            
             document.getElementById('main-ui').classList.add('hidden');
             document.getElementById('editor-ui').classList.remove('hidden');
-            document.getElementById('active-repo-name').innerText = name.toUpperCase();
+            document.getElementById('active-repo-name').innerText = name;
             document.getElementById('active-repo-url').innerText = `${name}.rzone.web.id`;
+            document.getElementById('repo-traffic').innerText = data.traffic || 0;
             document.getElementById('btn-preview').onclick = () => window.open(`http://${name}.rzone.web.id`, '_blank');
             loadRepoFiles(id);
+            vlog("Repo " + name + " loaded", "info");
+        };
+
+        // --- FILE SYSTEM (With index.html Validation) ---
+        window.triggerFilePicker = () => document.getElementById('file-picker').click();
+        document.getElementById('file-picker').onchange = (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            if(file.name !== "index.html") {
+                vlog("Upload Error: Must be index.html", "error");
+                alert("Wajib index.html!");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                vlog("Cloud Syncing index.html...", "info");
+                await push(ref(db, `repositories/${activeRepoId}/files`), {
+                    name: "index.html",
+                    content: ev.target.result
+                });
+                vlog("Deployment Successful", "success");
+            };
+            reader.readAsText(file);
         };
 
         function loadRepoFiles(repoId) {
@@ -227,8 +283,9 @@
                 if(snap.exists()) {
                     Object.entries(snap.val()).forEach(([fid, file]) => {
                         sidebar.innerHTML += `
-                            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl cursor-pointer" onclick="loadEditor('${fid}', '${file.name}', \`${b64(file.content)}\`)">
-                                <span class="text-xs font-bold text-slate-600">📄 ${file.name}</span>
+                            <div class="p-4 bg-slate-50 rounded-2xl flex justify-between items-center cursor-pointer hover:bg-blue-50 transition-all" onclick="loadEditor('${fid}', '${file.name}', \`${b64(file.content)}\`)">
+                                <span class="text-xs font-bold text-slate-600 uppercase italic">📄 ${file.name}</span>
+                                <button onclick="event.stopPropagation(); deleteFile('${fid}')" class="text-red-400 hover:text-red-600 text-[10px] font-black">X</button>
                             </div>
                         `;
                     });
@@ -239,30 +296,53 @@
         window.loadEditor = (fid, name, contentB64) => {
             activeFileId = fid;
             document.getElementById('editor-area').classList.remove('hidden');
-            document.getElementById('editing-name').innerText = name;
-            document.getElementById('code-input').value = b64_decode(contentB64);
+            document.getElementById('editing-name').innerText = name.toUpperCase();
+            document.getElementById('code-input').value = b64_dec(contentB64);
+            document.getElementById('save-indicator').innerText = "Ready";
+            document.getElementById('save-indicator').className = "text-[10px] font-bold text-slate-300 italic";
+        };
+
+        window.markUnsaved = () => {
+            document.getElementById('save-indicator').innerText = "● Unsaved Changes";
+            document.getElementById('save-indicator').className = "text-[10px] font-bold text-orange-400 italic";
         };
 
         window.saveCurrentFile = async () => {
-            vlog("Saving changes...", "info");
+            document.getElementById('save-indicator').innerText = "○ Syncing Cloud...";
             const content = document.getElementById('code-input').value;
             await update(ref(db, `repositories/${activeRepoId}/files/${activeFileId}`), { content: content });
-            vlog("Cloud Updated", "success");
-            alert("SAVED!");
+            document.getElementById('save-indicator').innerText = "● Cloud Updated";
+            document.getElementById('save-indicator').className = "text-[10px] font-bold text-green-500 italic";
+            vlog("Manual save triggered", "success");
         };
 
-        async function renderSite(sub) {
-            const q = query(ref(db, 'repositories'), orderByChild('name'), equalTo(sub));
-            const snap = await get(q);
-            if (snap.exists()) {
-                const files = Object.values(snap.val())[0].files || {};
-                const index = Object.values(files).find(f => f.name === 'index.html');
-                if (index) { document.open(); document.write(index.content); document.close(); }
+        window.deleteCurrentRepo = async () => {
+            if(confirm("Hapus seluruh project dan data traffic?")) {
+                await remove(ref(db, `repositories/${activeRepoId}`));
+                location.reload();
             }
-        }
+        };
 
+        window.deleteFile = async (fid) => {
+            if(confirm("Hapus file?")) {
+                await remove(ref(db, `repositories/${activeRepoId}/files/${fid}`));
+                document.getElementById('editor-area').classList.add('hidden');
+            }
+        };
+
+        window.createProject = async () => {
+            const n = prompt("Project Name:");
+            if(n) {
+                const c = n.toLowerCase().replace(/\s/g, '-');
+                await set(push(ref(db, 'repositories')), { name: c, traffic: 0, createdAt: Date.now() });
+                vlog("New Endpoint: " + c, "success");
+            }
+        };
+
+        // --- HELPERS ---
         function b64(s) { return btoa(unescape(encodeURIComponent(s))); }
-        function b64_decode(s) { return decodeURIComponent(escape(atob(s))); }
+        function b64_dec(s) { return decodeURIComponent(escape(atob(s))); }
+
     </script>
 </body>
 </html>
